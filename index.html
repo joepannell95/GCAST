@@ -1,0 +1,249 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GCAST Sports</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#111; color:#fff; margin:0; padding:1rem; text-align:center; }
+    h1 { margin-bottom:0.25rem; }
+    .meta { opacity:.8; font-size:.9rem; margin-bottom:.75rem; }
+    video { width:100%; max-width:900px; margin:1rem auto; display:block; background:#000; }
+    select { padding:0.6rem; margin:1rem; font-size:1rem; width:90%; max-width:600px; }
+    button { padding:.5rem .9rem; border-radius:.5rem; border:0; background:#2e7; color:#000; font-weight:700; }
+  </style>
+</head>
+<body>
+  <h1>🏈🏀 GCAST · Sports</h1>
+  <div class="meta" id="status">Loading…</div>
+  <video id="player" controls autoplay playsinline></video>
+  <br/>
+  <select id="channelList"></select>
+  <div class="meta">Tip: YouTube links open in a new tab (not HLS).</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <script>
+/* Your original playlist text (unchanged). The parser handles:
+   1) #EXTINF line + next-line URL
+   2) "Name - https://..." single-line entries (with or without numbering)
+   3) <option value="URL">Name</option> items
+*/
+const M3U_TEXT = `#EXTM3U
+
+Ole Miss Rebels (Football/Basketball Official) - https://www.youtube.com/olemisssports
+2.  Dallas Cowboys (Official) - https://www.youtube.com/channel/UCC0BPKJxAyxjQoRTYbpW0FQ
+3.  New Orleans Saints (Official) - https://www.youtube.com/neworleanssaints
+4.  Tennessee Titans (Official) - https://www.youtube.com/titans
+5.  New York Giants (Official) - https://www.youtube.com/channel/UCk2FqoG8dN5EAz5WU3A0D7A
+6.  Atlanta Braves (Official) - https://www.youtube.com/channel/UCNWnkblY5_kmf4OQ9l0LgnA
+7.  Memphis Redbirds (Official) - https://www.youtube.com/memphisredbirds
+8.  Rocket City Trash Pandas (Official) - https://www.youtube.com/c/RocketCityTrashPandas
+9.  NFL Throwback (Official NFL History/Commentary) - https://www.youtube.com/channel/UCiWLfSweyrnNDvhucYqxUPA
+10.  BBallBreakdown (NBA Commentary/Analysis) - https://www.youtube.com/channel/UC8d0xbgrgFH5UvIQ3xT4aMw
+11.  ThatsGoodSports (NFL Commentary/Comedy) - https://www.youtube.com/channel/UCew5br5cO1ZKO7Z_F1WA8Bg
+12.  ESPN (Official Highlights/Commentary for NBA/NFL/MLB/College) - https://www.youtube.com/channel/UCiWLfSweyrnNDvhucYqxUPA
+13.  NBA Official (Highlights/Commentary) - https://www.youtube.com/channel/UCWJ2lWNubArHWmf3FIHbfcQ
+14.  Red Bull TV (Action Sports/Games like Red Bull Events) - https://www.youtube.com/channel/UCblfuW_4rakIf2h6aqANefA
+15.  Sports Illustrated (Commentary on NBA/NFL/MLB/College) - https://www.youtube.com/channel/UCPAt6z5uXbhovz7u6IasZgA
+
+Bein Sports (NBA/MLB/NFL/College) - https://redbox-beinsports-xumo.amagi.tv/playlist.m3u8
+2.  Bein Sports Xtra (Extra US Sports Coverage) - https://bein-xtra-roku-us.amagi.tv/playlist.m3u8
+3.  Carbon Outdoor TV (Hunting/Fishing/Outdoor Activities) - https://carbontv-gb-lg.amagi.tv/playlist.m3u8
+4.  Combat GO Martial Arts TV (WWE-Style Combat Sports) - https://combatgo-stirr.amagi.tv/playlist.m3u8
+5.  EDGEsport TV (Extreme Sports/Games like Red Bull Events) - https://edgesport-samsungus.amagi.tv/playlist.m3u8
+6.  Esports TV (Gaming/Activities) - https://estv-lg.amagi.tv/playlist.m3u8
+7.  HNC Sports (General US Sports) - https://hncfree-samsung-uk.amagi.tv/playlist.m3u8
+8.  HuntStream (Hunting/Outdoor Sports) - https://huntstream-viewlift.amagi.tv/playlist.m3u8
+9.  MMA TV (WWE/UFC-Style Combat) - https://alchimie-mmatv-samsung.amagi.tv/playlist.m3u8
+10.  MotoSport TV (Racing/Games) - https://alchimie-motosport-tv-rakuten.amagi.tv/playlist.m3u8
+11.  naviofequency campusloresports (College Esports/Games) - https://naviofequency-campusloresports.amagi.tv/playlist.m3u8
+12.  Origin Sports (General US Sports) - https://raycoms-originsports.amagi.tv/playlist.m3u8
+13.  Outdoor America (Hunting/Fishing/Outdoor) - https://muxip-outdooramerica-klowdtv.amagi.tv/playlist.m3u8
+14.  Outside TV (Outdoor Sports/Activities) - https://outsidetv-oando.amagi.tv/playlist.m3u8
+15.  Pac12 Sports TV (College Football/Basketball - Pac-12) - https://pac12-localnow.amagi.tv/playlist.m3u8
+16.  Players TV (NBA/MLB/NFL Player Commentary) - https://playerstv-roku-us.amagi.tv/playlist.m3u8
+17.  Pursuit Outdoor Channel (Hunting/Fishing) - https://pursuitup-klowdtv.amagi.tv/playlist.m3u8
+18.  Racing America (Racing/Games) - https://racingamerica-plex.amagi.tv/playlist.m3u8
+19.  Real Madrid TV (Soccer, but includes US commentary) - https://cinedigm-rmtv-lg.amagi.tv/playlist.m3u8
+20.  SportsGrid (Sports Betting/Commentary for NBA/NFL/MLB) - https://sportsgrid-plex.amagi.tv/playlist.m3u8
+21.  Surf World TV (Surfing/Activities) - https://alchimie-surfworldtv-lg.amagi.tv/playlist.m3u8
+22.  Tennis Channel (Tennis/Games) - https://tennischannel-intl-samsung-uk.amagi.tv/playlist.m3u8
+23.  Trace sports (General Sports) - https://lightning-tracesport-samsungau.amagi.tv/playlist.m3u8
+24.  Trace Sportstars (Sports Stars Commentary) - https://trace-sportstars-tcl.amagi.tv/playlist.m3u8
+25.  USA Today Sports (US Sports News/Highlights) - https://usatodaysports-stirr.amagi.tv/playlist.m3u8
+26.  Waypoint Outdoor TV (Hunting/Fishing/Outdoor) - https://waypointtv-lg-us.amagi.tv/playlist.m3u8
+27.  Whistle Sports TV (Fun Sports/Games) - https://whistletv-tcl.amagi.tv/playlist.m3u8
+28.  Wired2Fish (Fishing) - https://wire2fish-klowdtv.amagi.tv/playlist.m3u8
+29.  AFN Sports (US Military Sports - NFL/NBA/MLB) - http://149.202.215.151:8080/live/home/home/26068.ts
+30.  AFN Sports 2 HD (US Sports) - http://149.202.215.151:8080/live/home/home/26067.ts
+31.  AFN Sports HD (US Sports) - http://149.202.215.151:8080/live/home/home/26066.ts
+32.  Univision Deportes HD US (US Sports, including College) - http://149.202.215.151:8080/live/home/home/26069.ts
+33.  Mountain West Network (College Football/Basketball) - https://6e7321dcb6b84ceb844ec3773b59e53a.midas.us-east-1.amazonaws.com/v1/master/61a556f78e4547c8ab5c6297ea291d6350767ca2/LiveEvents/hls/live/535741/event_3/2/911/master.m3u8
+34.  NASCAR Live Event (Racing/Games) - http://nascar_prhd-f.akamaihd.net/i/nascarliveevent_01@81650/master.m3u8
+35.  NCAA College Basketball on CBS - https://sports-events-cedexis.cbsaavideo.com/cbk1/master.m3u8
+36.  NCAA College Basketball on CBS 2 - https://sports-events-cedexis.cbsaavideo.com/cbk2/master.m3u8
+37.  NCAA College Basketball on CBS 3 - https://sports-events-cedexis.cbsaavideo.com/cbk3/master.m3u8
+38.  NFL on NBC - http://sprtlive1.akamaized.net/hls/live/586250/nbc-sports0909143029-ua/master.m3u8
+39.  NHL Free Game of the Day - http://dcarack11.vpg.cdn.yimg.com/live/dax-global/external/nhlfgotd/nhlfgotd_2200.m3u8?a=nhlhighlights&ib=sapi&ih=6c12f8f1&ns=c+i+ci+cii+ps+flags+ru&s=d821dad32449c86e0451eb640d125ceb&vid=13541b09-5b61-3a1e-baef-59a44ee7846b&x=1490082759&ps=r2l52uy5&flags=marker_cslgeo+marker_csbgeo+marker_ar2+am_allow
+40.  PGA Tour on CBS - http://cbssportsliveios-i.akamaihd.net/hls/live/207523/pgatour_simulcast/desktop.m3u8
+41.  SEC on CBS (College Football/Basketball) - http://cbssportsliveios-i.akamaihd.net/hls/live/200603/seclive1/desktop.m3u8
+
+#EXTINF:-1 tvg-id="AbuDhabiSports1.ae" group-title="Sports",Abu Dhabi Sports 1
+https://vo-live-media.cdb.cdn.orange.com/Content/Channel/AbuDhabiSportsChannel1/HLS/index.m3u8
+#EXTINF:-1 tvg-id="ACCDigitalNetwork.us" group-title="Sports",ACC Digital Network
+https://aegis-cloudfront-1.tubi.video/ce6650c2-26ea-4433-9276-8a5ebf3992cc/playlist.m3u8
+#EXTINF:-1 tvg-id="ACCNetwork.us" group-title="Sports",ACC Network
+https://fl3.moveonjoy.com/ACC_NETWORK/index.m3u8
+#EXTINF:-1 tvg-id="ACLCornholeTV.us" group-title="Sports",ACL Cornhole TV
+https://1815337252.rsc.cdn77.org/HLS/CORNHOLETV.m3u8
+#EXTINF:-1 tvg-id="ActionSports.us@Germany" group-title="Sports",Action Sports Germany
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5be1be871843b56328bc3ef1/master.m3u8
+#EXTINF:-1 tvg-id="AdventureSportsTV.us@SD" group-title="Sports",Adventure Sports TV SD
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/63c9550df13a9b00078677a7/master.m3u8
+#EXTINF:-1 tvg-id="beINSportsUSA.us" group-title="Sports",beIN Sports USA
+http://fl3.moveonjoy.com/BEIN_SPORTS/index.m3u8
+#EXTINF:-1 tvg-id="beINSPORTSXTRA.us" group-title="Sports",beIN SPORTS XTRA
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5df975e2b27cf5000921c102/master.m3u8
+#EXTINF:-1 tvg-id="beINSPORTSXTRAenEspanol.us" group-title="Sports",beIN SPORTS XTRA en Espanol
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/60492fdd9989d30007ccd30a/master.m3u8
+#EXTINF:-1 tvg-id="BEKSports.us@West" group-title="Sports",BEK Sports West
+https://cdn3.wowza.com/5/ZWQ1K2NYTmpFbGsr/BEK-WOWZA-1/smil:BEKPRIMEW.smil/playlist.m3u8
+#EXTINF:-1 tvg-id="BellatorMMA.us" group-title="Sports",Bellator MMA
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5ebc8688f3697d00072f7cf8/master.m3u8
+#EXTINF:-1 tvg-id="BigTenNetwork.us" group-title="Sports",Big Ten Network
+https://fl3.moveonjoy.com/BIG_TEN_NETWORK/index.m3u8
+#EXTINF:-1 tvg-id="CBSSportsHQ.us" group-title="Sports",CBS Sports HQ
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5e9f2c05172a0f0007db4786/master.m3u8
+#EXTINF:-1 tvg-id="CBSSportsNetworkUSA.us" group-title="Sports",CBS Sports Network USA
+https://fl3.moveonjoy.com/CBS_SPORTS_NETWORK/index.m3u8
+#EXTINF:-1 tvg-id="EDGEsport.uk" group-title="Sports",EDGEsport
+https://edgesports-sportstribal.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="ESPNews.us" group-title="Sports",ESPNews
+https://fl3.moveonjoy.com/ESPN_NEWS/index.m3u8
+#EXTINF:-1 tvg-id="ESPNU.us" group-title="Sports",ESPNU
+https://fl3.moveonjoy.com/ESPN_U/index.m3u8
+#EXTINF:-1 tvg-id="FanDuelSportsNetwork.us" group-title="Sports",FanDuel Sports Network
+https://fl3.moveonjoy.com/PAC_12/index.m3u8
+#EXTINF:-1 tvg-id="FanDuelTV.us" group-title="Sports",FanDuel TV
+https://fl3.moveonjoy.com/TVG/index.m3u8
+#EXTINF:-1 tvg-id="FuboSportsNetwork.us" group-title="Sports",Fubo Sports Network
+https://apollo.production-public.tubi.io/live/ac-fubo.m3u8
+#EXTINF:-1 tvg-id="GolfChannel.us@SD" group-title="Sports",Golf Channel SD
+https://fl3.moveonjoy.com/GOLF/index.m3u8
+#EXTINF:-1 tvg-id="MSG.us" group-title="Sports",MSG
+https://fl3.moveonjoy.com/MSG/index.m3u8
+#EXTINF:-1 tvg-id="NBATV.us" group-title="Sports",NBA TV
+https://fl3.moveonjoy.com/NBA_TV/index.m3u8
+#EXTINF:-1 tvg-id="NFLChannel.us" group-title="Sports",NFL Channel
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5ced7d5df64be98e07ed47b6/master.m3u8
+#EXTINF:-1 tvg-id="NFLNetwork.us" group-title="Sports",NFL Network
+https://fl3.moveonjoy.com/NFL_NETWORK/index.m3u8
+#EXTINF:-1 tvg-id="NHLNetwork.us" group-title="Sports",NHL Network
+https://nhl-firetv.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="Pac12Insider.us" group-title="Sports",Pac-12 Insider
+https://pac12-firetv.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="PBRRidePass.us" group-title="Sports",PBR RidePass
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/60d39387706fe50007fda8e8/master.m3u8
+#EXTINF:-1 tvg-id="PGATour.us" group-title="Sports",PGA Tour
+http://cfd-v4-service-channel-stitcher-use1-1.prd.pluto.tv/stitch/hls/channel/5de94dacb394a300099fa22a/master.m3u8
+#EXTINF:-1 tvg-id="RedBullTV.at" group-title="Sports",Red Bull TV
+https://3ea22335.wurl.com/master/f36d25e7e52f1ba8d7e56eb859c636563214f541/UmFrdXRlblRWLWdiX1JlZEJ1bGxUVl9ITFM/playlist.m3u8
+#EXTINF:-1 tvg-id="SportsGrid.us" group-title="Sports",SportsGrid
+https://amg00315-sportsgrid-firetv.amagi.tv/playlist.m3u8
+#EXTINF:-1 tvg-id="Stadium.us" group-title="Sports",Stadium
+https://apollo.production-public.tubi.io/live/ac-stadium2.m3u8
+#EXTINF:-1 tvg-id="TennisChannel.us" group-title="Sports",Tennis Channel
+https://cdn-ue1-prod.tsv2.amagi.tv/linear/amg01444-tennischannelth-tennischannelnl-samsungnl/playlist.m3u8
+`;
+
+/* ---- Robust parser: 3 sources + de-dup ---- */
+const statusEl = document.getElementById('status');
+const entries = [];
+const seen = new Set();
+
+// A) #EXTINF + next-line URL (skip empty lines between)
+(() => {
+  const lines = M3U_TEXT.split(/\r?\n/);
+  for (let i=0;i<lines.length;i++){
+    const line = lines[i].trim();
+    if (line.startsWith('#EXTINF')) {
+      const name = line.split(',').slice(-1)[0].trim();
+      let j = i + 1;
+      while (j < lines.length && !/^https?:\/\//i.test(lines[j].trim())) j++;
+      const url = (lines[j]||'').trim();
+      if (/^https?:\/\//i.test(url)) {
+        const key = name+'|'+url;
+        if(!seen.has(key)){ entries.push({name,url}); seen.add(key); }
+      }
+    }
+  }
+})();
+
+// B) Single-line "Name - URL" (tolerates numbering and different dashes)
+(() => {
+  const re = /^(\d+\.\s*)?(.+?)[\s–-]+\s*(https?:\/\/[^\s<]+).*$/i;
+  M3U_TEXT.split(/\r?\n/).forEach(row=>{
+    const m = row.trim().match(re);
+    if(m){
+      const name = m[2].trim();
+      const url  = m[3].trim();
+      const key = name+'|'+url;
+      if(!seen.has(key)){ entries.push({name,url}); seen.add(key); }
+    }
+  });
+})();
+
+// C) <option value="URL">Name</option>
+(() => {
+  const optRe = /<option[^>]*\svalue="([^"]+)"[^>]*>([^<]+)<\/option>/gi;
+  let m; while ((m = optRe.exec(M3U_TEXT)) !== null) {
+    const url = m[1].trim(), name = m[2].trim();
+    if(/^https?:\/\//i.test(url)){
+      const key = name+'|'+url;
+      if(!seen.has(key)){ entries.push({name,url}); seen.add(key); }
+    }
+  }
+})();
+
+statusEl.textContent = `Loaded ${entries.length} channels`;
+
+/* ---- Render & play (YouTube opens in new tab) ---- */
+const list = document.getElementById('channelList');
+const player = document.getElementById('player');
+let hls;
+
+entries.forEach(({name,url})=>{
+  const opt = document.createElement('option');
+  opt.value = url; opt.textContent = name;
+  list.appendChild(opt);
+});
+
+function destroy(){
+  if (hls){ hls.destroy(); hls=null; }
+  player.removeAttribute('src'); player.load();
+}
+
+function play(url){
+  destroy();
+  // YouTube: open externally (not HLS)
+  if (/^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\//i.test(url)) {
+    window.open(url, '_blank');
+    return;
+  }
+  if (Hls.isSupported()) {
+    hls = new Hls();
+    hls.loadSource(url);
+    hls.attachMedia(player);
+  } else if (player.canPlayType('application/vnd.apple.mpegurl')) {
+    player.src = url;
+    player.play().catch(()=>{});
+  } else {
+    player.src = url;
+  }
+}
+
+list.addEventListener('change', ()=> play(list.value));
+if(entries.length){ list.selectedIndex = 0; play(entries[0].value||entries[0].url); }
+  </script>
+</body>
+</html>
